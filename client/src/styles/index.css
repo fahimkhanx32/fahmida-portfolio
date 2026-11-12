@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: <html class="dark"> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Theme tokens. Each theme is tuned on its own — not an inversion.     */
+/* To retheme the site, edit only the values in these two blocks.       */
+/* ------------------------------------------------------------------ */
+:root {
+  --bg: #f6f3ea;            /* warm ivory */
+  --surface: #fbf9f3;       /* raised ivory */
+  --sage: #dde5d3;          /* soft sage panel */
+  --sage-strong: #c5d1b6;
+  --ink: #232826;           /* charcoal text */
+  --ink-soft: #4d5650;      /* secondary text (6.9:1 on bg) */
+  --line: #d9d4c3;          /* soft neutral border */
+  --accent: #1f3a2d;        /* deep forest */
+  --accent-soft: #55663a;   /* muted olive (5.6:1 on bg) */
+  --on-accent: #f6f3ea;
+  --ring: #55663a;
+  --shadow: 0 1px 2px rgb(35 40 38 / 0.05), 0 10px 30px -12px rgb(35 40 38 / 0.18);
+}
+
+.dark {
+  --bg: #0f1c16;            /* deep forest */
+  --surface: #15261e;       /* dark sage surface */
+  --sage: #1b3027;
+  --sage-strong: #274237;
+  --ink: #eeeadb;           /* soft ivory text */
+  --ink-soft: #b4bcab;      /* secondary text (9.0:1 on bg) */
+  --line: #2a3f34;
+  --accent: #a9c596;        /* muted green accent (9.3:1 on bg) */
+  --accent-soft: #93ad82;
+  --on-accent: #0f1c16;
+  --ring: #a9c596;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -14px rgb(0 0 0 / 0.55);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sage: var(--sage);
+  --color-sage-strong: var(--sage-strong);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --shadow-card: var(--shadow);
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  @media (min-width: 1280px) { html { scroll-padding-top: 9.5rem; } }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Subtle theme transition. Applied only while toggling (see useTheme). */
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition:
+      background-color 0.35s ease,
+      color 0.35s ease,
+      border-color 0.35s ease,
+      fill 0.35s ease !important;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.012em;
+    line-height: 1.12;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: var(--sage-strong);
+    color: var(--ink);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Section reveal — one restrained effect, used per section, not per card */
+/* ------------------------------------------------------------------ */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Timeline progression: the line draws as each entry enters the viewport */
+.tl-item .tl-dot {
+  background: var(--bg);
+  border-color: var(--line);
+  transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.5s ease;
+}
+.tl-item.is-visible .tl-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+.tl-item .tl-seg {
+  transform-origin: top;
+  transform: scaleY(0);
+  transition: transform 0.9s ease 0.1s;
+}
+.tl-item.is-visible .tl-seg {
+  transform: scaleY(1);
+}
+
+@keyframes scroll-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+.scroll-cue { animation: scroll-cue 2.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal, .tl-item .tl-seg { opacity: 1; transform: none; transition: none; }
+  .tl-item .tl-dot { transition: none; }
+  .scroll-cue { animation: none; }
+  html.theme-transition, html.theme-transition * { transition: none !important; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Floating glass navbar + spotlight sweep.                             */
+/* Light and dark are separate designs (tokens below), not an inversion. */
+/* ------------------------------------------------------------------ */
+:root {
+  --nav-bg: linear-gradient(180deg, rgb(255 255 255 / 0.88), rgb(255 255 255 / 0.66)), rgb(251 249 243 / 0.7);
+  --nav-border: rgb(35 40 38 / 0.1);
+  --nav-shadow: 0 12px 32px -16px rgb(35 40 38 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.95);
+  --nav-ink: #232826;
+  --nav-ink-soft: #4d5650;
+  --nav-active: #3b6a2c;
+  --nav-ctrl-border: rgb(35 40 38 / 0.22);
+  --nav-hover: rgb(85 102 58 / 0.1);
+  --nav-divider: rgb(35 40 38 / 0.14);
+  --nav-seg-on-bg: #dcebc9;
+  --nav-seg-on-ink: #1f3a2d;
+  --nav-toggle-bg: rgb(35 40 38 / 0.06);
+  /* light-toned beam */
+  --menu-bg: rgb(252 250 245 / 0.97);
+  --beam-bar: #b9dca3;
+  --beam-cone: rgb(185 220 160 / 0.7);
+  --beam-glow: #a8d18c;
+}
+.dark {
+  --nav-bg: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.03)), rgb(12 28 20 / 0.58);
+  --nav-border: rgb(255 255 255 / 0.16);
+  --nav-shadow: 0 14px 44px -14px rgb(0 0 0 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --nav-ink: #eeeadb;
+  --nav-ink-soft: #c5cfbc;
+  --nav-active: #7df0b8;
+  --nav-ctrl-border: rgb(255 255 255 / 0.4);
+  --nav-hover: rgb(255 255 255 / 0.08);
+  --nav-divider: rgb(255 255 255 / 0.22);
+  --nav-seg-on-bg: #0f4aa8;
+  --nav-seg-on-ink: #ffffff;
+  --nav-toggle-bg: rgb(15 74 168 / 0.22);
+  --menu-bg: rgb(14 30 22 / 0.96);
+  --beam-bar: #6ee7b7;
+  --beam-cone: rgb(110 231 183 / 0.4);
+  --beam-glow: #34d399;
+}
+
+.nav-glass {
+  background: var(--nav-bg);
+  border: 1px solid var(--nav-border);
+  box-shadow: var(--nav-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  color: var(--nav-ink);
+}
+.nav-bar { border-width: 0 0 1px 0; border-radius: 0; width: 100%; }
+.nav-ink-soft { color: var(--nav-ink-soft); }
+.nav-divider { width: 1px; align-self: stretch; margin-block: 0.9rem; background: var(--nav-divider); }
+.nav-strip-divider { width: 1px; height: 1.25rem; background: var(--nav-divider); }
+
+.nav-btn,
+.nav-ctrl {
+  border: 1px solid var(--nav-ctrl-border);
+  color: var(--nav-ink);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.nav-btn:hover:not(:disabled),
+.nav-ctrl:hover { background: var(--nav-hover); border-color: var(--nav-active); }
+.nav-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.nav-toggle { background: var(--nav-toggle-bg); border: 1px solid var(--nav-ctrl-border); }
+.nav-seg-on { background: var(--nav-seg-on-bg); color: var(--nav-seg-on-ink); }
+.nav-seg-off { color: var(--nav-ink-soft); }
+.nav-seg-off:hover { color: var(--nav-ink); }
+
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding-inline: 0.7rem;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  color: var(--nav-ink-soft);
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+.nav-link:hover { color: var(--nav-ink); }
+.nav-link[aria-current="true"],
+.nav-link[data-active="true"] { color: var(--nav-active); }
+.nav-link[aria-current="true"]::after,
+.nav-link[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.7rem;
+  bottom: 1.05rem;
+  height: 1px;
+  background: var(--beam-glow);
+  opacity: 0.55;
+}
+
+/* Spotlight: one element that glides to the active item. */
+.nav-spot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    transform 0.65s cubic-bezier(0.22, 1.2, 0.36, 1),
+    width 0.65s cubic-bezier(0.22, 1.2, 0.36, 1),
+    opacity 0.3s ease;
+  will-change: transform, width;
+}
+.nav-spot[data-ready="true"] { opacity: 1; }
+.nav-spot[data-instant="true"] { transition: opacity 0.3s ease; }
+.nav-spot-cone {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: calc(100% + 3.5rem);
+  height: 100%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, var(--beam-cone) 0%, transparent 88%);
+  clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
+  filter: blur(1.5px);
+}
+.nav-spot-bar {
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  width: 2.75rem;
+  height: 4px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--beam-bar);
+  box-shadow: 0 0 14px 1px var(--beam-bar);
+}
+.nav-spot-glow {
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 78%;
+  height: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, var(--beam-glow), transparent);
+  box-shadow: 0 0 16px 2px var(--beam-glow);
+}
+
+.nav-menu {
+  background: var(--menu-bg);
+  border: 1px solid var(--nav-border);
+  box-shadow: var(--nav-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+}
+.nav-menu-item {
+  display: block;
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  color: var(--nav-ink-soft);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.nav-menu-item-icon { display: flex; align-items: center; gap: 0.75rem; }
+.nav-menu-item:hover { background: var(--nav-hover); color: var(--nav-ink); }
+.nav-menu-item[aria-current="true"] { color: var(--nav-active); background: var(--nav-hover); }
+
+/* 1024-1279px (small laptops, 125-150% display scaling): keep the full bar, just tighter. */
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .nav-link { padding-inline: 0.5rem; font-size: 1rem; }
+  .nav-link[aria-current="true"]::after,
+  .nav-link[data-active="true"]::after { inset-inline: 0.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-spot { transition: opacity 0.2s ease; }
+}
